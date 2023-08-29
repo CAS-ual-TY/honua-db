@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS entities (
     id INTEGER NOT NULL,
     identity TEXT NOT NULL,
     PRIMARY KEY(id, identity),
-    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE,
+    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(id) ON DELETE CASCADE,
     entity_id TEXT NOT NULL,
     name TEXT NOT NULL,
     is_device BOOLEAN NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS honua_services (
     id INTEGER NOT NULL,
     identity TEXT NOT NULL,
     PRIMARY KEY(id, identity),
-    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE,
+    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(id) ON DELETE CASCADE,
     domain TEXT NOT NULL,
     name TEXT NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT true

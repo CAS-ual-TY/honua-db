@@ -47,5 +47,4 @@ type HonuaService struct {
 	Identity string
 	Domain   string
 	Name     string
-	Enabled  bool
 }
