@@ -157,7 +157,7 @@ func (hdb *HonuaDB) make_entity(rows *sql.Rows) (*models.Entity, error) {
 	var sensorType models.VictronSensorType
 	var hasNumericState bool
 
-	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &hasNumericState, &sensorType)
+	err := rows.Scan(&id, &identity, &entityID, &name, &isDevice, &allowRules, &hasAttribute, &attribute, &isVictronSensor, &sensorType,  &hasNumericState)
 	if err != nil {
 		return nil, err
 	}
