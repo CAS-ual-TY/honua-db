@@ -8,7 +8,7 @@ import (
 	"github.com/JonasBordewick/honua-db/models"
 )
 
-func (hdb *HonuaDB) AddEntity(entity *models.Entity) error {
+func (hdb *HonuaDB) AddEntity(entity *models.Entity, hasID bool, id int32) error {
 	const query = `
 INSERT INTO entities(
 	id, identity, entity_id, name,
@@ -21,9 +21,13 @@ INSERT INTO entities(
 		String: entity.Attribute,
 	}
 
-	id, err := hdb.get_entity_id(entity.Identity)
-	if err != nil {
-		return err
+	var err error
+
+	if !hasID {
+		id, err = hdb.get_entity_id(entity.Identity)
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = hdb.psqlDB.Exec(
@@ -32,6 +36,7 @@ INSERT INTO entities(
 		attributeString, entity.IsVictronSensor, entity.SensorType,
 		entity.HasNumericState,
 	)
+
 	return err
 }
 
@@ -179,7 +184,7 @@ func (hdb *HonuaDB) make_entity(rows *sql.Rows) (*models.Entity, error) {
 	return result, nil
 }
 
-func (hdb *HonuaDB) get_entity_id(identifier string) (int, error) {
+func (hdb *HonuaDB) get_entity_id(identifier string) (int32, error) {
 	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1) THEN true ELSE false END"
 
 	rows, err := hdb.psqlDB.Query(query, identifier)
@@ -210,7 +215,7 @@ func (hdb *HonuaDB) get_entity_id(identifier string) (int, error) {
 		return -1, err
 	}
 
-	var id int = -1
+	var id int32 = -1
 
 	for rows.Next() {
 		err = rows.Scan(&id)
