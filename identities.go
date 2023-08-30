@@ -9,7 +9,29 @@ func (hdb *HonuaDB) AddIdentity(identity *models.Identity) error {
 }
 
 func (hdb *HonuaDB) DeleteIdentity(id string) error {
-	const query = "DELETE FROM identities WHERE identifier = $1"
+	const query = "DELETE FROM identities WHERE id = $1"
 	_, err := hdb.psqlDB.Exec(query, id)
 	return err
+}
+
+func (hdb *HonuaDB) ExistIdentity(identifier string) (bool, error) {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM identities WHERE id = $1) THEN true ELSE false END;"
+	rows, err := hdb.psqlDB.Query(query, identifier)
+	if err != nil {
+		return false, err
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return state, nil
 }

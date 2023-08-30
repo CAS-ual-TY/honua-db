@@ -105,7 +105,7 @@ WHERE identity = $9 AND id = $10;
 	return err
 }
 
-func (hdb *HonuaDB) DeleteEntity(identity string, id int) error {
+func (hdb *HonuaDB) DeleteEntity(identity string, id int32) error {
 	const query = "DELETE FROM entities WHERE identity=$1 AND id = $2;"
 
 	_, err := hdb.psqlDB.Exec(query, identity, id)
@@ -113,6 +113,30 @@ func (hdb *HonuaDB) DeleteEntity(identity string, id int) error {
 		log.Printf("An error occured during deleting the entity with id = %d: %s\n", id, err.Error())
 	}
 	return err
+}
+
+func (hdb *HonuaDB) ExistEntity(identity string, id int32) (bool, error) {
+
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM entities WHERE identity = $1 AND id = $2) THEN true ELSE false END"
+
+	rows, err := hdb.psqlDB.Query(query, identity, id)
+	if err != nil {
+		return false, err
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return state, nil
 }
 
 func (hdb *HonuaDB) make_entity(rows *sql.Rows) (*models.Entity, error) {
