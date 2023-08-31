@@ -14,7 +14,7 @@ type myStruct struct {
 }
 
 func (hdb *HonuaDB) AddServices(identity string, services []*models.Service) error {
-	exist, err := hdb.has_services(identity)
+	exist, err := hdb.HasServices(identity)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (hdb *HonuaDB) DeleteServices(id string) error {
 	return err
 }
 
-func (hdb *HonuaDB) has_services(id string) (bool, error) {
+func (hdb *HonuaDB) HasServices(id string) (bool, error) {
 	filter := bson.M{"_id": id}
 	var result *myStruct
 	err := hdb.mongoDB.Collection("services").FindOne(context.Background(), filter).Decode(&result)

@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS honua_services (
     identity TEXT NOT NULL,
     PRIMARY KEY(id, identity),
     CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(id) ON DELETE CASCADE,
-    domain TEXT NOT NULL,
+    domain TEXT UNIQUE,
     name TEXT NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT true
 );

@@ -110,6 +110,51 @@ func (hdb *HonuaDB) get_honua_service_id(identity string) (int, error) {
 	return id, nil
 }
 
+func (hdb *HonuaDB) ExistHonuaService(identity, domain string) (bool, error) {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM honua_services WHERE identity = $1 AND domain = $2) THEN true ELSE false END"
+
+	rows, err := hdb.psqlDB.Query(query, identity, domain)
+	if err != nil {
+		return false, err
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return state, nil
+}
+
+func (hdb *HonuaDB) GetIDofHonuaService(identity, domain string) (int32, error) {
+	const query = "SELECT id FROM honua_services WHERE identity = $1 AND domain = $2;"
+	rows, err := hdb.psqlDB.Query(query, identity, domain)
+	if err != nil {
+		return -1, err
+	}
+
+	var id int32 = -1
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			rows.Close()
+			return -1, err
+		}
+	}
+
+	rows.Close()
+
+	return id, nil
+}
+
 func (hdb *HonuaDB) make_honua_service(rows *sql.Rows) (*models.HonuaService, error) {
 	var id int32
 	var identity string
