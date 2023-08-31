@@ -26,7 +26,7 @@ func (hdb *HonuaDB) AddServices(identity string, services []*models.Service) err
 		}
 	}
 
-	_, err = hdb.mongoDB.Collection("services").InsertOne(context.Background(), myStruct{
+	_, err = hdb.mongoDB.Collection("services").InsertOne(context.Background(), &myStruct{
 		id: identity, services: services,
 	})
 

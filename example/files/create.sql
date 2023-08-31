@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS metadata (
 
 CREATE TABLE IF NOT EXISTS identities (
     id TEXT PRIMARY KEY,
-    name TEXT DEFAULT "Unknown"
+    name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS entities (
@@ -41,6 +41,5 @@ CREATE TABLE IF NOT EXISTS honua_services (
     PRIMARY KEY(id, identity),
     CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(id) ON DELETE CASCADE,
     domain TEXT UNIQUE,
-    name TEXT NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT true
+    name TEXT NOT NULL
 );
