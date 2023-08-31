@@ -8,11 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type myStruct struct {
-	id       string            `bson:"_id, omitempty"`
-	services []*models.Service `bson:"services, omitempty"`
-}
-
 func (hdb *HonuaDB) AddServices(identity string, services []*models.Service) error {
 	exist, err := hdb.HasServices(identity)
 	if err != nil {
@@ -26,8 +21,9 @@ func (hdb *HonuaDB) AddServices(identity string, services []*models.Service) err
 		}
 	}
 
-	_, err = hdb.mongoDB.Collection("services").InsertOne(context.Background(), &myStruct{
-		id: identity, services: services,
+	_, err = hdb.mongoDB.Collection("services").InsertOne(context.Background(), &models.Services{
+		Id: identity,
+		Services: services,
 	})
 
 	return err
@@ -35,12 +31,12 @@ func (hdb *HonuaDB) AddServices(identity string, services []*models.Service) err
 
 func (hdb *HonuaDB) GetServices(id string) ([]*models.Service, error) {
 	filter := bson.M{"_id": id}
-	var result *myStruct
+	var result *models.Services
 	err := hdb.mongoDB.Collection("services").FindOne(context.Background(), filter).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
-	return result.services, nil
+	return result.Services, nil
 }
 
 func (hdb *HonuaDB) DeleteServices(id string) error {
@@ -51,7 +47,7 @@ func (hdb *HonuaDB) DeleteServices(id string) error {
 
 func (hdb *HonuaDB) HasServices(id string) (bool, error) {
 	filter := bson.M{"_id": id}
-	var result *myStruct
+	var result *models.Services
 	err := hdb.mongoDB.Collection("services").FindOne(context.Background(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return false, nil
