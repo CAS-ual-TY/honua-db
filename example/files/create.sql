@@ -43,3 +43,21 @@ CREATE TABLE IF NOT EXISTS honua_services (
     domain TEXT UNIQUE,
     name TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS allowed_sensors (
+    id SERIAL PRIMARY KEY,
+    identity TEXT NOT NULL,
+    device_id INTEGER NOT NULL,
+    sensor_id INTEGER NOT NULL,
+    CONSTRAINT fk_device_id FOREIGN KEY(identity, device_id) REFERENCES entities(identity, id) ON DELETE CASCADE,
+    CONSTRAINT fk_sensor_id FOREIGN KEY(identity, sensor_id) REFERENCES entities(identity, id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS allowed_service (
+    id SERIAL PRIMARY KEY,
+    identity TEXT NOT NULL,
+    device_id INTEGER NOT NULL,
+    service_id INTEGER NOT NULL,
+    CONSTRAINT fk_device_id FOREIGN KEY(identity, device_id) REFERENCES entities(identity, id) ON DELETE CASCADE,
+    CONSTRAINT fk_service_id FOREIGN KEY(identity, service_id) REFERENCES honua_services(identity, id) ON DELETE CASCADE
+);
