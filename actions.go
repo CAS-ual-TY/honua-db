@@ -1,0 +1,163 @@
+package honuadb
+
+import (
+	"database/sql"
+	"errors"
+
+	"github.com/JonasBordewick/honua-db/models"
+)
+
+/*
+	CREATE TABLE IF NOT EXISTS actions (
+		id INTEGER NOT NULL,
+		identity TEXT NOT NULL,
+		PRIMARY KEY(id, identity),
+		CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(id) ON DELETE CASCADE,
+		is_then_action BOOLEAN NOT NULL,
+		action_type INTEGER NOT NULL,
+		service_id INTEGER,
+		CONSTRAINT fk_service_id FOREIGN KEY(identity, service_id) REFERENCES honua_services(identity, id) ON DELETE CASCADE
+		delay_id INTEGER,
+		CONSTRAINT fk_delay_id FOREIGN KEY(identity, delay_id) REFERENCES delays(identity, id) ON DELETE CASCADE,
+		rule_id INTEGER NOT NULL,
+		CONSTRAINT fk_rule_id FOREIGN KEY(identity, rule_id) REFERENCES rules(identity, id) ON DELETE CASCADE
+	);
+*/
+
+func (hdb *HonuaDB) AddAction(action *models.Action, hasID, isThenAction bool, ruleID int) error {
+	id, err := hdb.get_action_id(action.Identity)
+	if err != nil {
+		return err
+	}
+
+	if hasID {
+		id = action.ID
+	}
+
+	if action.Type == models.SERVICE {
+		const query = "INSERT INTO actions(id, identity, is_then_Action, action_type, service_id, rule_id) VALUES($1, $2, $3, $4, $5, $6);"
+		_, err = hdb.psqlDB.Exec(query, id, action.Identity, isThenAction, models.SERVICE, action.Service.ID, ruleID)
+		if err != nil {
+			return err
+		}
+	} else {
+		delayID, err := hdb.AddDelay(action.Delay, hasID)
+		if err != nil {
+			return err
+		}
+		const query = "INSERT INTO actions(id, identity, is_then_Action, action_type, delay_id, rule_id) VALUES($1, $2, $3, $4, $5, $6);"
+		_, err = hdb.psqlDB.Exec(query, id, action.Identity, isThenAction, models.DELAY, delayID, ruleID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (hdb *HonuaDB) GetActions(identity string, ruleID int) ([]*models.Action, []*models.Action, error) {
+	const query = "SELECT * FROM actions WHERE identity=$1 AND rule_id=$2"
+	rows, err := hdb.psqlDB.Query(query, identity, ruleID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var thenActions []*models.Action = []*models.Action{}
+	var elseActions []*models.Action = []*models.Action{}
+
+	for rows.Next() {
+		action, err := hdb.make_action(rows)
+		if err != nil {
+			rows.Close()
+			return nil, nil, err
+		}
+		if action.IsThenAction {
+			thenActions = append(thenActions, action)
+		} else {
+			elseActions = append(elseActions, action)
+		}
+	}
+
+	rows.Close()
+
+	return thenActions, elseActions, nil
+}
+
+func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
+	var id int
+	var identity string
+	var isThenAction bool
+	var actionType models.ActionType
+	var serviceID int
+	var delayID int
+	var ruleID int
+
+	err := rows.Scan(&id, &identity, &isThenAction, &actionType, &serviceID, &delayID, &ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	if actionType == models.SERVICE {
+		service, err := hdb.GetService(serviceID, identity)
+		if err != nil {
+			return nil, err
+		}
+		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, Service: service}, nil
+	} else {
+		delay, err := hdb.GetDelay(delayID, identity)
+		if err != nil {
+			return nil, err
+		}
+		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, Delay: delay}, nil
+	}
+}
+
+func (hdb *HonuaDB) get_action_id(identity string) (int, error) {
+	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM actions WHERE identity = $1) THEN true ELSE false END"
+
+	rows, err := hdb.psqlDB.Query(query, identity)
+	if err != nil {
+		return -1, err
+	}
+
+	var exist_identity bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&exist_identity)
+		if err != nil {
+			rows.Close()
+			return -1, err
+		}
+	}
+
+	rows.Close()
+
+	if !exist_identity {
+		return 0, nil
+	}
+
+	query = "SELECT MAX(id) FROM actions WHERE identity = $1;"
+
+	rows, err = hdb.psqlDB.Query(query, identity)
+	if err != nil {
+		return -1, err
+	}
+
+	var id int = -1
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			rows.Close()
+			return -1, err
+		}
+	}
+	rows.Close()
+
+	if id == -1 {
+		return -1, errors.New("something went wrong during getting id of action")
+	}
+
+	id = id + 1
+
+	return id, nil
+}

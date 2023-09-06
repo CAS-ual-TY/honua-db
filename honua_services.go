@@ -55,6 +55,29 @@ func (hdb *HonuaDB) GetHonuaServices(identity string) ([]*models.HonuaService, e
 	return services, nil
 }
 
+func (hdb *HonuaDB) GetService(serviceID int, identity string) (*models.HonuaService, error) {
+	const query = "SELECT * FROM honua_services WHERE id=$1 AND identity=$2"
+	rows, err := hdb.psqlDB.Query(query, serviceID, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	var service *models.HonuaService
+
+	for rows.Next() {
+		service, err = hdb.make_honua_service(rows)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+	}
+
+	rows.Close()
+
+	return service, nil
+
+}
+
 func (hdb *HonuaDB) DeleteHonuaService(identity string, serviceID int32) error {
 	const query = "DELETE FROM honua_services WHERE identity=$1 AND id = $2;"
 

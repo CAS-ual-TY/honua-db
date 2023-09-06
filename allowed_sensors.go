@@ -35,3 +35,28 @@ func (hdb *HonuaDB) IsSensorAllowed(identity string, deviceId, sensorId int32) (
 
 	return state, nil
 }
+
+func (hdb *HonuaDB) GetIDsOfAllowedSensors(identity string, deviceId int32) ([]int, error) {
+	const query = "SELECT sensor_id FROM allowed_sensors WHERE identity=$1 AND device_id=$2 ORDER BY id;"
+	rows, err := hdb.psqlDB.Query(query, identity, deviceId)
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []int = []int{}
+
+	for rows.Next() {
+		var sID int
+		err = rows.Scan(&sID)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+
+		ids = append(ids, sID)
+	}
+
+	rows.Close()
+
+	return ids, nil
+}
