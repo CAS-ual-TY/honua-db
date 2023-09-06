@@ -70,7 +70,7 @@ type Action struct {
 	Identity     string
 	Type         ActionType
 	IsThenAction bool
-	Service      *HonuaService
+	ServiceID    int32
 	Delay        *Delay
 }
 

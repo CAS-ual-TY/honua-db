@@ -36,7 +36,7 @@ func (hdb *HonuaDB) AddAction(action *models.Action, hasID, isThenAction bool, r
 
 	if action.Type == models.SERVICE {
 		const query = "INSERT INTO actions(id, identity, is_then_Action, action_type, service_id, rule_id) VALUES($1, $2, $3, $4, $5, $6);"
-		_, err = hdb.psqlDB.Exec(query, id, action.Identity, isThenAction, models.SERVICE, action.Service.ID, ruleID)
+		_, err = hdb.psqlDB.Exec(query, id, action.Identity, isThenAction, models.SERVICE, action.ServiceID, ruleID)
 		if err != nil {
 			return err
 		}
@@ -97,11 +97,7 @@ func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
 	}
 
 	if actionType == models.SERVICE {
-		service, err := hdb.GetService(serviceID, identity)
-		if err != nil {
-			return nil, err
-		}
-		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, Service: service}, nil
+		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, ServiceID: int32(serviceID)}, nil
 	} else {
 		delay, err := hdb.GetDelay(delayID, identity)
 		if err != nil {
