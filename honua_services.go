@@ -18,18 +18,18 @@ CREATE TABLE IF NOT EXISTS honua_services (
 );
 */
 
-func (hdb *HonuaDB) AddHonuaService(service *models.HonuaService, hasID bool) error {
+func (hdb *HonuaDB) AddHonuaService(service *models.HonuaService, hasID bool) (int, error) {
 	const query = `INSERT INTO honua_services(id, identity, domain, name) VALUES($1, $2, $3, $4);`
 	id, err := hdb.get_honua_service_id(service.Identity)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	if hasID {
 		id = int(service.ID)
 	}
 
 	_, err = hdb.psqlDB.Exec(query, id, service.Identity, service.Domain, service.Name)
-	return err
+	return id, err
 }
 
 func (hdb *HonuaDB) GetHonuaServices(identity string) ([]*models.HonuaService, error) {
