@@ -53,7 +53,7 @@ func (hdb *HonuaDB) add_subcondition(condition *models.Condition, parentID int, 
 	}
 
 	if condition.Type == models.NUMERICSTATE {
-		const query = "INSERT INTO conditions(id, identity, condition_type, sensor_id, above, below, parent_id) SET ($1, $2, $3, $4, $5, $6, $7);"
+		const query = "INSERT INTO conditions(id, identity, condition_type, sensor_id, above, below, parent_id) VALUES($1, $2, $3, $4, $5, $6, $7);"
 		var below sql.NullInt32 = sql.NullInt32{}
 		var above sql.NullInt32 = sql.NullInt32{}
 		if condition.Below != nil {
@@ -66,7 +66,7 @@ func (hdb *HonuaDB) add_subcondition(condition *models.Condition, parentID int, 
 		_, err = hdb.psqlDB.Exec(query, id, condition.Identity, condition.Type, condition.SensorID, above, below, parentID)
 		return err
 	} else if condition.Type == models.STATE {
-		const query = "INSERT INTO conditions(id, identity, condition_type, sensor_id, comparison_state, parent_id) SET ($1, $2, $3, $4, $5, $6);"
+		const query = "INSERT INTO conditions(id, identity, condition_type, sensor_id, comparison_state, parent_id) VALUES($1, $2, $3, $4, $5, $6);"
 		_, err = hdb.psqlDB.Exec(query, id, condition.Identity, condition.Type, condition.SensorID, condition.ComparisonState, parentID)
 		return err
 	} else if condition.Type == models.TIME {
@@ -78,7 +78,7 @@ func (hdb *HonuaDB) add_subcondition(condition *models.Condition, parentID int, 
 			Valid:  len(condition.After) > 0,
 			String: condition.After,
 		}
-		const query = "INSERT INTO conditions(id, identity, condition_type, after, before, parent_id) SET ($1, $2, $3, $4, $5, $6);"
+		const query = "INSERT INTO conditions(id, identity, condition_type, after, before, parent_id) VALUES($1, $2, $3, $4, $5, $6);"
 		_, err = hdb.psqlDB.Exec(query, id, condition.Identity, condition.Type, after, before, parentID)
 		return err
 	}
