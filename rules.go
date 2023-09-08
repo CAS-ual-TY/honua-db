@@ -55,6 +55,29 @@ func (hdb *HonuaDB) AddRule(rule *models.Rule, hasID bool) (int, error) {
 	return rID, nil
 }
 
+func (hdb *HonuaDB) GetRules(identity string) ([]*models.Rule, error) {
+	const query = "SELECT * FROM rules WHERE identity=$1;"
+	rows, err := hdb.psqlDB.Query(query, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	var rules []*models.Rule = []*models.Rule{}
+
+	for rows.Next() {
+		rule, err := hdb.make_rule(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		rules = append(rules, rule)
+	}
+
+	rows.Close()
+
+	return rules, nil
+}
+
 func (hdb *HonuaDB) GetRule(ruleID int, identity string) (*models.Rule, error) {
 	const query = "SELECT * from rules WHERE id=$1 AND identity=$2;"
 	rows, err := hdb.psqlDB.Query(query, ruleID, identity)
