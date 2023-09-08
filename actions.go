@@ -87,8 +87,8 @@ func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
 	var identity string
 	var isThenAction bool
 	var actionType models.ActionType
-	var serviceID int
-	var delayID int
+	var serviceID sql.NullInt32
+	var delayID sql.NullInt32
 	var ruleID int
 
 	err := rows.Scan(&id, &identity, &isThenAction, &actionType, &serviceID, &delayID, &ruleID)
@@ -97,9 +97,9 @@ func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
 	}
 
 	if actionType == models.SERVICE {
-		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, ServiceID: int32(serviceID)}, nil
+		return &models.Action{ID: id, Identity: identity, Type: actionType, IsThenAction: isThenAction, ServiceID: serviceID.Int32}, nil
 	} else {
-		delay, err := hdb.GetDelay(delayID, identity)
+		delay, err := hdb.GetDelay(int(delayID.Int32), identity)
 		if err != nil {
 			return nil, err
 		}
