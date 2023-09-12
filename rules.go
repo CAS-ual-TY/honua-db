@@ -3,6 +3,7 @@ package honuadb
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/JonasBordewick/honua-db/models"
 )
@@ -15,7 +16,7 @@ func (hdb *HonuaDB) AddRule(rule *models.Rule, hasID bool) (int, error) {
 	}
 
 	var periodicTrigger sql.NullInt32 = sql.NullInt32{
-		Valid:  !rule.EventBasedEvaluation,
+		Valid: !rule.EventBasedEvaluation,
 		Int32: int32(rule.PeriodicTrigger),
 	}
 
@@ -50,7 +51,6 @@ func (hdb *HonuaDB) AddRule(rule *models.Rule, hasID bool) (int, error) {
 			return -1, err
 		}
 	}
-		
 
 	return rID, nil
 }
@@ -127,28 +127,30 @@ func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
 		return nil, err
 	}
 
+	log.Printf("PeriodicTriggerType %d\n", triggerType.Int32)
+
 	if eventBasedEvaluation && triggerType.Valid {
 		return &models.Rule{
-			ID:  id,
-			Identity: identity,
-			TargetID: int(targetID),
-			Enabled: enabled,
+			ID:                   id,
+			Identity:             identity,
+			TargetID:             int(targetID),
+			Enabled:              enabled,
 			EventBasedEvaluation: true,
-			PeriodicTrigger: models.PeriodicTriggerType(triggerType.Int32),
-			Condition: condition,
-			ThenActions: thenActions,
-			ElseActions: elseActions,
+			PeriodicTrigger:      models.PeriodicTriggerType(triggerType.Int32),
+			Condition:            condition,
+			ThenActions:          thenActions,
+			ElseActions:          elseActions,
 		}, nil
 	} else {
 		return &models.Rule{
-			ID:  id,
-			Identity: identity,
-			TargetID: int(targetID),
-			Enabled: enabled,
+			ID:                   id,
+			Identity:             identity,
+			TargetID:             int(targetID),
+			Enabled:              enabled,
 			EventBasedEvaluation: false,
-			Condition: condition,
-			ThenActions: thenActions,
-			ElseActions: elseActions,
+			Condition:            condition,
+			ThenActions:          thenActions,
+			ElseActions:          elseActions,
 		}, nil
 	}
 }
