@@ -129,13 +129,13 @@ func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
 
 	log.Printf("PeriodicTriggerType %d\n", triggerType.Int32)
 
-	if eventBasedEvaluation && triggerType.Valid {
+	if !eventBasedEvaluation && triggerType.Valid {
 		return &models.Rule{
 			ID:                   id,
 			Identity:             identity,
 			TargetID:             int(targetID),
 			Enabled:              enabled,
-			EventBasedEvaluation: true,
+			EventBasedEvaluation: false,
 			PeriodicTrigger:      models.PeriodicTriggerType(triggerType.Int32),
 			Condition:            condition,
 			ThenActions:          thenActions,
@@ -147,7 +147,7 @@ func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
 			Identity:             identity,
 			TargetID:             int(targetID),
 			Enabled:              enabled,
-			EventBasedEvaluation: false,
+			EventBasedEvaluation: true,
 			Condition:            condition,
 			ThenActions:          thenActions,
 			ElseActions:          elseActions,
