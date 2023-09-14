@@ -10,6 +10,7 @@ const (
 	FifteenMin
 	TwentyMin
 	TwentyFiveMin
+	ThirtyMin
 	FortyFiveMin
 	OneH
 	TwoH
