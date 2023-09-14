@@ -103,62 +103,32 @@ func (hdb *HonuaDB) GetRule(ruleID int, identity string) (*models.Rule, error) {
 	return rule, nil
 }
 
-func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
-	var id int
-	var identity string
-	var targetID int32
-	var enabled bool
-	var eventBasedEvaluation bool
-	var triggerType sql.NullInt32
-	var conditionID int
-
-	err := rows.Scan(&id, &identity, &targetID, &enabled, &eventBasedEvaluation, &triggerType, &conditionID)
-	if err != nil {
-		return nil, err
-	}
-
-	condition, err := hdb.GetCondition(conditionID, identity)
-	if err != nil {
-		return nil, err
-	}
-
-	thenActions, elseActions, err := hdb.GetActions(identity, id)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("PeriodicTriggerType %d\n", triggerType.Int32)
-
-	if !eventBasedEvaluation && triggerType.Valid {
-		return &models.Rule{
-			ID:                   id,
-			Identity:             identity,
-			TargetID:             int(targetID),
-			Enabled:              enabled,
-			EventBasedEvaluation: false,
-			PeriodicTrigger:      models.PeriodicTriggerType(triggerType.Int32),
-			Condition:            condition,
-			ThenActions:          thenActions,
-			ElseActions:          elseActions,
-		}, nil
-	} else {
-		return &models.Rule{
-			ID:                   id,
-			Identity:             identity,
-			TargetID:             int(targetID),
-			Enabled:              enabled,
-			EventBasedEvaluation: true,
-			Condition:            condition,
-			ThenActions:          thenActions,
-			ElseActions:          elseActions,
-		}, nil
-	}
-}
-
 func (hdb *HonuaDB) DeleteRule(delayID int, identity string) error {
 	const query = "DELETE FROM delays WHERE id=$1 AND identity=$2;"
 	_, err := hdb.psqlDB.Exec(query, delayID, identity)
 	return err
+}
+
+func (hdb* HonuaDB) GetStateOfRule(targetID int, identity string) (bool, error) {
+	const query = "SELECT enabled FROM rules WHERE target_id=$1 AND identity=$2;"
+	rows, err := hdb.psqlDB.Query(query, targetID, identity)
+	if err != nil {
+		return false, err
+	}
+
+	var enabled bool = false
+
+	for rows.Next() {
+		err := rows.Scan(&enabled)
+		if err != nil {
+			rows.Close()
+			return false, err
+		}
+	}
+
+	rows.Close()
+
+	return enabled, nil
 }
 
 func (hdb *HonuaDB) get_rule_id(identity string) (int, error) {
@@ -210,4 +180,56 @@ func (hdb *HonuaDB) get_rule_id(identity string) (int, error) {
 	id = id + 1
 
 	return id, nil
+}
+
+func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
+	var id int
+	var identity string
+	var targetID int32
+	var enabled bool
+	var eventBasedEvaluation bool
+	var triggerType sql.NullInt32
+	var conditionID int
+
+	err := rows.Scan(&id, &identity, &targetID, &enabled, &eventBasedEvaluation, &triggerType, &conditionID)
+	if err != nil {
+		return nil, err
+	}
+
+	condition, err := hdb.GetCondition(conditionID, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	thenActions, elseActions, err := hdb.GetActions(identity, id)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("PeriodicTriggerType %d\n", triggerType.Int32)
+
+	if !eventBasedEvaluation && triggerType.Valid {
+		return &models.Rule{
+			ID:                   id,
+			Identity:             identity,
+			TargetID:             int(targetID),
+			Enabled:              enabled,
+			EventBasedEvaluation: false,
+			PeriodicTrigger:      models.PeriodicTriggerType(triggerType.Int32),
+			Condition:            condition,
+			ThenActions:          thenActions,
+			ElseActions:          elseActions,
+		}, nil
+	} else {
+		return &models.Rule{
+			ID:                   id,
+			Identity:             identity,
+			TargetID:             int(targetID),
+			Enabled:              enabled,
+			EventBasedEvaluation: true,
+			Condition:            condition,
+			ThenActions:          thenActions,
+			ElseActions:          elseActions,
+		}, nil
+	}
 }
