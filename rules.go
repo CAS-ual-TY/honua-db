@@ -67,6 +67,7 @@ func (hdb *HonuaDB) GetRules(identity string) ([]*models.Rule, error) {
 	for rows.Next() {
 		rule, err := hdb.make_rule(rows)
 		if err != nil {
+			rows.Close()
 			return nil, err
 		}
 
@@ -102,6 +103,32 @@ func (hdb *HonuaDB) GetRule(ruleID int, identity string) (*models.Rule, error) {
 
 	return rule, nil
 }
+
+func (hdb *HonuaDB) GetRuleOfTarget(targetID int, identity string) (*models.Rule, error) {
+	const query = "SELECT * from rules WHERE target_id=$1 AND identity=$2;"
+	rows, err := hdb.psqlDB.Query(query, targetID, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	var rule *models.Rule
+
+	for rows.Next() {
+		rule, err = hdb.make_rule(rows)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+	}
+
+	rows.Close()
+
+	if rule == nil {
+		return nil, errors.New("something went wrong")
+	}
+
+	return rule, nil
+} 
 
 func (hdb *HonuaDB) DeleteRule(delayID int, identity string) error {
 	const query = "DELETE FROM delays WHERE id=$1 AND identity=$2;"
