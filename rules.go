@@ -136,7 +136,7 @@ func (hdb *HonuaDB) DeleteRule(delayID int, identity string) error {
 	return err
 }
 
-func (hdb* HonuaDB) GetStateOfRule(targetID int, identity string) (bool, error) {
+func (hdb *HonuaDB) GetStateOfRule(targetID int, identity string) (bool, error) {
 	const query = "SELECT enabled FROM rules WHERE target_id=$1 AND identity=$2;"
 	rows, err := hdb.psqlDB.Query(query, targetID, identity)
 	if err != nil {
@@ -156,6 +156,28 @@ func (hdb* HonuaDB) GetStateOfRule(targetID int, identity string) (bool, error) 
 	rows.Close()
 
 	return enabled, nil
+}
+
+func (hdb *HonuaDB) HasRule(targetID int32, identity string) bool {
+	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM rules WHERE target_id=$1 AND identity=$2) THEN true ELSE false END;"
+	rows, err := hdb.psqlDB.Query(query, identity)
+	if err != nil {
+		return false
+	}
+
+	var state bool = false
+
+	for rows.Next() {
+		err = rows.Scan(&state)
+		if err != nil {
+			rows.Close()
+			return false
+		}
+	}
+
+	rows.Close()
+
+	return state
 }
 
 func (hdb *HonuaDB) get_rule_id(identity string) (int, error) {
