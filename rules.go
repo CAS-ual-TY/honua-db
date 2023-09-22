@@ -180,6 +180,12 @@ func (hdb *HonuaDB) HasRule(targetID int32, identity string) bool {
 	return state
 }
 
+func (hdb *HonuaDB) ToggleRule(ruleID int32, state bool, identity string) error {
+	const query = "UPDATE rules SET enabled=$1 WHERE id=$2 AND identity=$3;"
+	_, err := hdb.psqlDB.Exec(query, state, ruleID, identity)
+	return err
+}
+
 func (hdb *HonuaDB) get_rule_id(identity string) (int, error) {
 	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM rules WHERE identity = $1) THEN true ELSE false END"
 
