@@ -160,7 +160,7 @@ func (hdb *HonuaDB) GetStateOfRule(targetID int, identity string) (bool, error) 
 
 func (hdb *HonuaDB) HasRule(targetID int32, identity string) bool {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM rules WHERE target_id=$1 AND identity=$2) THEN true ELSE false END;"
-	rows, err := hdb.psqlDB.Query(query, identity)
+	rows, err := hdb.psqlDB.Query(query, targetID, identity)
 	if err != nil {
 		return false
 	}
