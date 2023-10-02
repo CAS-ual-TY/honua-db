@@ -3,7 +3,6 @@ package honuadb
 import (
 	"database/sql"
 	"errors"
-	"log"
 
 	"github.com/JonasBordewick/honua-db/models"
 )
@@ -128,7 +127,7 @@ func (hdb *HonuaDB) GetRuleOfTarget(targetID int, identity string) (*models.Rule
 	}
 
 	return rule, nil
-} 
+}
 
 func (hdb *HonuaDB) DeleteRule(delayID int, identity string) error {
 	const query = "DELETE FROM delays WHERE id=$1 AND identity=$2;"
@@ -260,8 +259,6 @@ func (hdb *HonuaDB) make_rule(rows *sql.Rows) (*models.Rule, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("PeriodicTriggerType %d\n", triggerType.Int32)
 
 	if !eventBasedEvaluation && triggerType.Valid {
 		return &models.Rule{
