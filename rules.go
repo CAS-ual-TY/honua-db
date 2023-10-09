@@ -3,6 +3,7 @@ package honuadb
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/JonasBordewick/honua-db/models"
 )
@@ -18,6 +19,8 @@ func (hdb *HonuaDB) AddRule(rule *models.Rule, hasID bool) (int, error) {
 		Valid: !rule.EventBasedEvaluation,
 		Int32: int32(rule.PeriodicTrigger),
 	}
+
+	log.Printf("[DB.ADDRULE]: %d\n", int32(rule.PeriodicTrigger))
 
 	const query = "INSERT INTO rules(id, identity, target_id, enabled, event_based_evaluation, periodic_trigger_type, condition_id) VALUES($1, $2, $3, $4, $5, $6, $7);"
 
@@ -129,9 +132,9 @@ func (hdb *HonuaDB) GetRuleOfTarget(targetID int, identity string) (*models.Rule
 	return rule, nil
 }
 
-func (hdb *HonuaDB) DeleteRule(delayID int, identity string) error {
-	const query = "DELETE FROM delays WHERE id=$1 AND identity=$2;"
-	_, err := hdb.psqlDB.Exec(query, delayID, identity)
+func (hdb *HonuaDB) DeleteRule(ruleID int, identity string) error {
+	const query = "DELETE FROM rules WHERE id=$1 AND identity=$2;"
+	_, err := hdb.psqlDB.Exec(query, ruleID, identity)
 	return err
 }
 
