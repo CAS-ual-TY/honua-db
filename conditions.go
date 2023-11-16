@@ -8,6 +8,8 @@ import (
 	"github.com/JonasBordewick/honua-db/models"
 )
 
+// AddCondition fügt eine Bedingung zur Datenbank hinzu. Die Funktion gibt die ID der hinzugefügten Bedingung zurück.
+// Wenn hasID true ist, wird die mit der Bedingung verbundene ID verwendet, andernfalls wird eine neue ID generiert.
 func (hdb *HonuaDB) AddCondition(condition *models.Condition, hasID bool) (int, error) {
 	if condition.Type >= models.NUMERICSTATE {
 		return -1, fmt.Errorf("%d is not valid for parent condition", condition.Type)
@@ -38,6 +40,7 @@ func (hdb *HonuaDB) AddCondition(condition *models.Condition, hasID bool) (int, 
 	return id, nil
 }
 
+// add_subcondition fügt eine Subbedingung zur Datenbank hinzu.
 func (hdb *HonuaDB) add_subcondition(condition *models.Condition, parentID int, hasID bool) error {
 	if condition.Type < models.NUMERICSTATE {
 		return fmt.Errorf("%d is not valid for subcondition", condition.Type)
@@ -85,6 +88,7 @@ func (hdb *HonuaDB) add_subcondition(condition *models.Condition, parentID int, 
 	return fmt.Errorf("%d is not valid for subcondition", condition.Type)
 }
 
+// GetCondition gibt eine Bedingung anhand der Bedingungs-ID und Identität zurück.
 func (hdb *HonuaDB) GetCondition(conditionID int, identity string) (*models.Condition, error) {
 	const query = "SELECT id, identity, condition_type FROM conditions WHERE id=$1 AND identity=$2;"
 	rows, err := hdb.psqlDB.Query(query, conditionID, identity)
@@ -107,6 +111,7 @@ func (hdb *HonuaDB) GetCondition(conditionID int, identity string) (*models.Cond
 	return result, nil
 }
 
+// get_subconditions gibt alle Subbedingungen einer bestimmten Identität und übergeordneten Bedingungs-ID zurück.
 func (hdb *HonuaDB) get_subconditions(identity string, parentID int) ([]*models.Condition, error) {
 	const query = "SELECT * FROM conditions WHERE identity=$1 AND parent_id=$2;"
 	rows, err := hdb.psqlDB.Query(query, identity, parentID)
@@ -130,12 +135,14 @@ func (hdb *HonuaDB) get_subconditions(identity string, parentID int) ([]*models.
 	return result, nil
 }
 
+// DeleteCondition löscht eine Bedingung anhand der Bedingungs-ID und Identität.
 func (hdb *HonuaDB) DeleteCondition(conditionID int, identity string) error {
 	const query = "DELETE FROM conditions WHERE id=$1 AND identity=$2;"
 	_, err := hdb.psqlDB.Exec(query, conditionID, identity)
 	return err
 }
 
+// get_condition_id gibt die ID einer Bedingung anhand der Identität zurück.
 func (hdb *HonuaDB) get_condition_id(identity string) (int, error) {
 	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM conditions WHERE identity = $1) THEN true ELSE false END"
 
@@ -187,6 +194,7 @@ func (hdb *HonuaDB) get_condition_id(identity string) (int, error) {
 	return id, nil
 }
 
+// make_condition erstellt ein Condition-Objekt basierend auf den Ergebnissen der Abfrage.
 func (hdb *HonuaDB) make_condition(rows *sql.Rows) (*models.Condition, error) {
 	var id int
 	var identity string
@@ -209,6 +217,7 @@ func (hdb *HonuaDB) make_condition(rows *sql.Rows) (*models.Condition, error) {
 	return &models.Condition{ID: id, Identity: identity, Type: cType, SubConditions: subs}, nil
 }
 
+// make_sub_condition erstellt ein Subcondition-Objekt basierend auf den Ergebnissen der Abfrage.
 func (hdb *HonuaDB) make_sub_condition(rows *sql.Rows) (*models.Condition, error) {
 	var id int
 	var identity string

@@ -12,17 +12,20 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// HonuaDB repräsentiert eine Verbindung zu PostgreSQL und MongoDB Datenbanken.
 type HonuaDB struct {
 	mongoDB     *mongo.Database
 	psqlDB      *sql.DB
 	pathToFiles string
 }
 
+// instance ist eine Singleton-Instanz von HonuaDB.
 var instance *HonuaDB
 
+// GetInstance gibt eine Instanz von HonuaDB zurück. Wenn keine Instanz vorhanden ist, wird eine erstellt.
 func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlPort, mongoHost, mongoPort, pathToFiles string) *HonuaDB {
 	if instance == nil {
-		// Connect to PSQL Database first
+		// Verbindung zur PSQL-Datenbank herstellen
 		var connStr = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", psqlUser, psqlPwd, psqlHost, psqlPort, dbname)
 		db, err := sql.Open("postgres", connStr)
 		if err != nil {
@@ -31,12 +34,12 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 		if err = db.Ping(); err != nil {
 			log.Fatal(err)
 		}
-		log.Println("The PSQL Database connection is established")
+		log.Println("Die Verbindung zur PSQL-Datenbank wurde hergestellt")
 		instance = &HonuaDB{
 			psqlDB:      db,
 			pathToFiles: pathToFiles,
 		}
-		// Connect to MongoDB
+		// Verbindung zu MongoDB herstellen
 		clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s:%s", mongoUser, mongoPwd, mongoHost, mongoPort))
 
 		client, err := mongo.Connect(context.Background(), clientOptions)
@@ -48,16 +51,16 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 			log.Fatal(err)
 		}
 
-		log.Println("The Mongo Database connection is established")
+		log.Println("Die Verbindung zur MongoDB wurde hergestellt")
 
 		database := client.Database(dbname)
-		
+
 		instance.mongoDB = database
 
-		// Create PSQL Tables + Migrate all files
+		// PSQL-Tabellen erstellen + alle Dateien migrieren
 		err = instance.create_tables()
 		if err != nil {
-			panic(err) // If any error occure Panic
+			panic(err) // Bei einem Fehler wird ein Panic ausgelöst
 		}
 		instance.Migrate()
 	}
@@ -65,6 +68,7 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 	return instance
 }
 
+// create_tables erstellt PSQL-Tabellen und migriert alle Dateien.
 func (hdb *HonuaDB) create_tables() error {
 	stmts, err := read_and_parse_sql_file(fmt.Sprintf("%s/create.sql", hdb.pathToFiles))
 	if err != nil {
@@ -73,7 +77,7 @@ func (hdb *HonuaDB) create_tables() error {
 	for _, stmt := range stmts {
 		_, err := hdb.psqlDB.Exec(stmt)
 		if err != nil {
-			log.Printf("Error while executing statement %s: %s\n", stmt, err.Error())
+			log.Printf("Fehler beim Ausführen des Statements %s: %s\n", stmt, err.Error())
 			return err
 		}
 	}
