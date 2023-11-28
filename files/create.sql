@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS metadata (
     executed_at TIMESTAMPTZ DEFAULT timezone('Europe/Berlin', now()) NOT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS identities (
     id TEXT PRIMARY KEY,
     name TEXT

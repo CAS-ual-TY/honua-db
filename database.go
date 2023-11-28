@@ -12,20 +12,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// HonuaDB repräsentiert eine Verbindung zu PostgreSQL und MongoDB Datenbanken.
 type HonuaDB struct {
 	mongoDB     *mongo.Database
 	psqlDB      *sql.DB
 	pathToFiles string
 }
 
-// instance ist eine Singleton-Instanz von HonuaDB.
 var instance *HonuaDB
 
-// GetInstance gibt eine Instanz von HonuaDB zurück. Wenn keine Instanz vorhanden ist, wird eine erstellt.
 func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlPort, mongoHost, mongoPort, pathToFiles string) *HonuaDB {
 	if instance == nil {
-		// Verbindung zur PSQL-Datenbank herstellen
 		var connStr = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", psqlUser, psqlPwd, psqlHost, psqlPort, dbname)
 		db, err := sql.Open("postgres", connStr)
 		if err != nil {
@@ -39,7 +35,6 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 			psqlDB:      db,
 			pathToFiles: pathToFiles,
 		}
-		// Verbindung zu MongoDB herstellen
 		clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s:%s", mongoUser, mongoPwd, mongoHost, mongoPort))
 
 		client, err := mongo.Connect(context.Background(), clientOptions)
@@ -57,7 +52,6 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 
 		instance.mongoDB = database
 
-		// PSQL-Tabellen erstellen + alle Dateien migrieren
 		err = instance.create_tables()
 		if err != nil {
 			panic(err) // Bei einem Fehler wird ein Panic ausgelöst
@@ -68,9 +62,8 @@ func GetInstance(dbname, psqlUser, psqlPwd, mongoUser, mongoPwd, psqlHost, psqlP
 	return instance
 }
 
-// create_tables erstellt PSQL-Tabellen und migriert alle Dateien.
 func (hdb *HonuaDB) create_tables() error {
-	stmts, err := read_and_parse_sql_file(fmt.Sprintf("%s/create.sql", hdb.pathToFiles))
+	stmts, err := readAndParseSqlFile(fmt.Sprintf("%s/create.sql", hdb.pathToFiles))
 	if err != nil {
 		return err
 	}

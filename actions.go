@@ -7,10 +7,6 @@ import (
 	"github.com/JonasBordewick/honua-db/models"
 )
 
-
-// AddAction fügt eine Aktion zur Datenbank hinzu, basierend auf den übergebenen Parametern.
-// Wenn hasID true ist, wird die mitgegebene ID verwendet, andernfalls wird eine neue ID generiert.
-// isThenAction gibt an, ob es sich um eine "then"-Aktion handelt, und ruleID ist die ID der zugehörigen Regel.
 func (hdb *HonuaDB) AddAction(action *models.Action, hasID, isThenAction bool, ruleID int) error {
 	id, err := hdb.get_action_id(action.Identity)
 	if err != nil {
@@ -41,8 +37,6 @@ func (hdb *HonuaDB) AddAction(action *models.Action, hasID, isThenAction bool, r
 	return nil
 }
 
-// GetActions gibt alle Aktionen für eine gegebene Identität und Regel-ID zurück.
-// Es werden zwei Slices von Aktionen zurückgegeben: "thenActions" und "elseActions".
 func (hdb *HonuaDB) GetActions(identity string, ruleID int) ([]*models.Action, []*models.Action, error) {
 	const query = "SELECT * FROM actions WHERE identity=$1 AND rule_id=$2"
 	rows, err := hdb.psqlDB.Query(query, identity, ruleID)
@@ -71,7 +65,6 @@ func (hdb *HonuaDB) GetActions(identity string, ruleID int) ([]*models.Action, [
 	return thenActions, elseActions, nil
 }
 
-// make_action erstellt ein Action-Objekt aus den Daten einer SQL-Abfrage.
 func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
 	var id int
 	var identity string
@@ -97,7 +90,6 @@ func (hdb *HonuaDB) make_action(rows *sql.Rows) (*models.Action, error) {
 	}
 }
 
-// get_action_id gibt die nächste verfügbare ID für eine Aktion zurück.
 func (hdb *HonuaDB) get_action_id(identity string) (int, error) {
 	query := "SELECT CASE WHEN EXISTS ( SELECT * FROM actions WHERE identity = $1) THEN true ELSE false END"
 

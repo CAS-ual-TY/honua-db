@@ -7,17 +7,6 @@ import (
 	"github.com/JonasBordewick/honua-db/models"
 )
 
-/*
-CREATE TABLE IF NOT EXISTS honua_services (
-    id INTEGER NOT NULL,
-    identity TEXT NOT NULL,
-    PRIMARY KEY(id, identity),
-    CONSTRAINT fk_identity FOREIGN KEY(identity) REFERENCES identities(identifier) ON DELETE CASCADE,
-    domain TEXT NOT NULL,
-    name TEXT NOT NULL
-);
-*/
-
 func (hdb *HonuaDB) AddHonuaService(service *models.HonuaService, hasID bool) (int, error) {
 	const query = `INSERT INTO honua_services(id, identity, domain, name) VALUES($1, $2, $3, $4);`
 	id, err := hdb.get_honua_service_id(service.Identity)

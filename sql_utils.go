@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func read_and_parse_sql_file(filepath string) ([]string, error) {
+func readAndParseSqlFile(filepath string) ([]string, error) {
 	var statements []string
 
 	file, err := os.Open(filepath)

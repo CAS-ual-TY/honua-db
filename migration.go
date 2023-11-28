@@ -7,14 +7,8 @@ import (
 	"strings"
 )
 
-const (
-	get_metadata    = "SELECT filepath FROM metadata ORDER BY id ASC;"
-	add_metadata    = "INSERT INTO metadata(filepath) VALUES ($1);"
-	exists_metadata = "SELECT CASE WHEN EXISTS ( SELECT * FROM metadata WHERE filepath = $1) THEN true ELSE false END"
-)
-
 func (hdb *HonuaDB) exists_metadata(filepath string) (bool, error) {
-	rows, err := hdb.psqlDB.Query(exists_metadata, filepath)
+	rows, err := hdb.psqlDB.Query("SELECT CASE WHEN EXISTS ( SELECT * FROM metadata WHERE filepath = $1) THEN true ELSE false END;", filepath)
 	if err != nil {
 		log.Printf("An error occured during checking if the metadata %s exists: %s\n", filepath, err.Error())
 		return false, err
@@ -39,7 +33,7 @@ func (hdb *HonuaDB) exists_metadata(filepath string) (bool, error) {
 func (hdb *HonuaDB) get_all_done_migrations() []string {
 	var migrations []string
 
-	rows, err := hdb.psqlDB.Query(get_metadata)
+	rows, err := hdb.psqlDB.Query("SELECT filepath FROM metadata ORDER BY id ASC;")
 	if err != nil {
 		rows.Close()
 		return migrations
@@ -60,7 +54,6 @@ func (hdb *HonuaDB) get_all_done_migrations() []string {
 	return migrations
 }
 
-// reads all the migrations sql files which are in the folder /app/database/files
 func (hdb *HonuaDB) read_migrations() []string {
 	var files []string
 
@@ -71,44 +64,40 @@ func (hdb *HonuaDB) read_migrations() []string {
 	return files
 }
 
-// adds a migration to the migration table
 func (hdb *HonuaDB) write_metadata(migration string) {
-	_, err := hdb.psqlDB.Exec(add_metadata, migration)
+	_, err := hdb.psqlDB.Exec("INSERT INTO metadata(filepath) VALUES ($1);", migration)
 	if err != nil {
 		log.Printf("Error running writeMetadata %s\n", err.Error())
 	}
 }
 
-// public Method to start the Migration
+// Public Method um die Datenbank Migration zu starten
 func (hdb *HonuaDB) Migrate() {
-	// get all migrations that where done in the past
-	var done []string = hdb.get_all_done_migrations()
-	// get all migrations which are in the folder /app/database/files
-	var migrations []string = hdb.read_migrations()
+	var done []string = hdb.get_all_done_migrations() // Liste der bereits gemachten Migrations
+	var migrations []string = hdb.read_migrations()   // Liste aller SQL-Files im Ordner inkl. create.sql
+	var todo []string = []string{}                    // Leere Liste, um alle noch nicht ausgeführten Migrations zu speichern
 
-	// array to store all the migrations that were not already done in the past
-	var todo []string = []string{}
-
-	// Iterate through the migration list and add those migrations that have not already been done to the todo list
+	// Iteration durch alle SQL-Files, es werden jene zur todo liste hinzugefügt, die nicht bereits ausgeführt wurden
 	for _, migration := range migrations {
 		if !string_array_contains_string(migration, done) {
 			todo = append(todo, migration)
 		}
 	}
 
-	// Iterate through the todo list and parse the migrations to string statements. And Execute each statement
-	// After that write the migration to the metadata table
+	// Iteration durch alle TODOs
 	for _, migration := range todo {
+		// Überspringt create.sql
 		if strings.Contains(migration, "create.sql") {
 			log.Printf("Migrate Database skip file %s\n", migration)
 			continue
 		}
 		log.Printf("Migrate Database with file %s\n", migration)
-		stmts, err := read_and_parse_sql_file(migration)
+		stmts, err := readAndParseSqlFile(migration) // liest das SQL-File ein und returnt ein Array an Statements
 		if err != nil {
 			log.Printf("Error while Migrating with file %s: %s\n", migration, err.Error())
 			continue
 		}
+		// Jedes Statement wird ausgeführt
 		for _, stmt := range stmts {
 			_, err := hdb.psqlDB.Exec(stmt)
 			if err != nil {
@@ -116,6 +105,7 @@ func (hdb *HonuaDB) Migrate() {
 				continue
 			}
 		}
+		// die Migration wird in der Datenbank gespeichert, sodass diese beim nächsten mal nicht erneut gemacht wird.
 		hdb.write_metadata(migration)
 	}
 }

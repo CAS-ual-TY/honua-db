@@ -8,11 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// AddDashboard fügt zur Datenbank ein (neues) Dashboard hinzu. Falls bereits
-// ein Dashboard mit der ID existiert, dann wird das bereits existierende
-// Dashboard gelöscht und erst dann wird das neue hinzugefügt.
-// Die Dashboard ID ist die identity des entsprechenden backends.
-// Die Methode ist ADD + EDIT gleichzeitig
 func (hdb *HonuaDB) AddDashboard(dashboard *models.Dashboard) error {
 	exist, err := hdb.ExistDashboard(dashboard.ID)
 	if err != nil {
@@ -29,7 +24,6 @@ func (hdb *HonuaDB) AddDashboard(dashboard *models.Dashboard) error {
 	return err
 }
 
-// GetDashboard gibt das Dashboard mit der angegebenen ID zurück
 func (hdb *HonuaDB) GetDashboard(id string) (*models.Dashboard, error) {
 	filter := bson.M{"_id": id}
 	var result *models.Dashboard
@@ -40,16 +34,12 @@ func (hdb *HonuaDB) GetDashboard(id string) (*models.Dashboard, error) {
 	return result, nil
 }
 
-// DeleteDashboard löscht das Dashboard mit der angegebenen ID
 func (hdb *HonuaDB) DeleteDashboard(id string) error {
 	filter := bson.M{"_id": id}
 	_, err := hdb.mongoDB.Collection("dashboard").DeleteOne(context.Background(), filter)
 	return err
 }
 
-// Die Private Methode exists_dashboard checkt, ob bereits ein Dashboard unter
-// der angegebenen ID existiert. Und gibt true zurück falls diese bereits
-// existiert und false wenn es kein Dashboard mit der angegebenen ID gibt.
 func (hdb *HonuaDB) ExistDashboard(id string) (bool, error) {
 	filter := bson.M{"_id": id}
 	var result *models.Dashboard
