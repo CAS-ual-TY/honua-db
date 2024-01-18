@@ -3,6 +3,7 @@ package honuadb
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/JonasBordewick/honua-db/models"
@@ -164,6 +165,7 @@ func (hdb *HonuaDB) HasRule(targetID int32, identity string) bool {
 	const query = "SELECT CASE WHEN EXISTS ( SELECT * FROM rules WHERE target_id=$1 AND identity=$2) THEN true ELSE false END;"
 	rows, err := hdb.psqlDB.Query(query, targetID, identity)
 	if err != nil {
+		fmt.Println("There was an Error: " + err.Error())
 		return false
 	}
 
