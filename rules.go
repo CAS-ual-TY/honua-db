@@ -25,14 +25,16 @@ func (hdb *HonuaDB) AddRule(rule *models.Rule, hasID bool) (int, error) {
 
 	const query = "INSERT INTO rules(id, identity, target_id, enabled, event_based_evaluation, periodic_trigger_type, condition_id) VALUES($1, $2, $3, $4, $5, $6, $7);"
 
-	rID, err := hdb.get_rule_id(rule.Identity)
-	if err != nil {
-		hdb.DeleteCondition(cID, rule.Identity)
-		return -1, err
-	}
+	var rID int
 
 	if hasID {
 		rID = rule.ID
+	} else {
+		rID, err = hdb.get_rule_id(rule.Identity)
+		if err != nil {
+			hdb.DeleteCondition(cID, rule.Identity)
+			return -1, err
+		}
 	}
 
 	_, err = hdb.psqlDB.Exec(query, rID, rule.Identity, rule.TargetID, rule.Enabled, rule.EventBasedEvaluation, periodicTrigger, cID)

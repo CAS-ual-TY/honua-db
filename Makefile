@@ -1,4 +1,4 @@
-VERSION ?= 0.0.30
+VERSION ?= 0.0.40
 NAME ?= HONUA-DB
 
 release:
